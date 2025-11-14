@@ -139,8 +139,9 @@
         <div id="queue-section" class="hidden">
             <div class="bg-gradient-to-br from-gray-900 to-black p-6 rounded-3xl shadow-2xl border-4 border-red-500">
                 <h2 class="text-3xl font-extrabold text-yellow-300 mb-6 flex items-center justify-center border-b-4 border-red-500 pb-4 text-shadow-neon">
+                    <!-- Le titre change selon le mode (DJ ou Visiteur) -->
                     <i data-lucide="check-circle" class="mr-3 h-8 w-8 text-green-400 animate-pulse-neon"></i>
-                    <span id="queue-title">La File d'Attente du DJ</span> (<span id="queue-count">0</span>)
+                    <span id="queue-title">La File d'Attente</span> (<span id="queue-count">0</span>)
                 </h2>
                 <ul id="song-list" class="space-y-4">
                     <!-- Les chansons seront injectées ici par JS -->
@@ -160,14 +161,11 @@
     <!-- Firebase SDKs import (must be type="module") -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        // Ajout de la gestion de l'état persistant pour l'ID utilisateur
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, addDoc, updateDoc, doc, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // --- Configuration Firebase (MISES À JOUR AVEC VOS VALEURS) ---
-        // Les variables __app_id et __firebase_config sont utilisées par défaut dans l'environnement.
-        // Si elles ne sont pas définies (pour un déploiement GitHub Pages par exemple),
-        // nous utilisons vos valeurs par défaut.
-        
         // VOS VALEURS DE CONFIGURATION:
         const APP_ID = 'lasweigas'; 
         const FIREBASE_CONFIG = {
@@ -179,12 +177,13 @@
             appId: "1:620039526308:web:83a6e370fb0379111c9331",
             measurementId: "G-KPF8D1ZNDX"
         };
-        const INITIAL_AUTH_TOKEN = null; 
+        // REMPLACEZ 'YOUR_DJ_TOKEN_HERE' par le jeton d'authentification personnalisé que vous aurez créé pour le DJ.
+        const DJ_TOKEN = null; 
+        const INITIAL_AUTH_TOKEN = DJ_TOKEN; // Si le DJ est connecté, le jeton DJ est utilisé. Sinon, signInAnonymously est utilisé.
         // -------------------------------------------------------------------
 
         // Configuration pour l'environnement de développement/déploiement
         const appId = typeof __app_id !== 'undefined' ? __app_id : APP_ID;
-        // On vérifie si __firebase_config est défini pour éviter de parser une chaîne vide ou non existante
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : FIREBASE_CONFIG;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : INITIAL_AUTH_TOKEN;
 
@@ -201,6 +200,8 @@
         const submissionMessageDiv = document.getElementById('submission-message');
         const queueCountSpan = document.getElementById('queue-count');
         const userIdDisplay = document.getElementById('user-id-display');
+        const queueTitle = document.getElementById('queue-title');
+
         document.getElementById('app-id-display').textContent = appId;
 
 
@@ -209,9 +210,20 @@
         let auth;
         let currentUserId = null;
         let isAuthReady = false;
+        let isDjMode = false; // Nouveau mode pour le DJ
 
-        // Fonction d'aide pour générer un UUID (pour les utilisateurs non authentifiés)
-        const generateUUID = () => crypto.randomUUID();
+        // Clé localStorage pour l'ID utilisateur persistant
+        const USER_ID_STORAGE_KEY = 'lasweigas_user_id';
+
+        // Fonction d'aide pour obtenir un ID utilisateur persistant ou en générer un nouveau
+        const getPersistentUserId = () => {
+            let userId = localStorage.getItem(USER_ID_STORAGE_KEY);
+            if (!userId) {
+                userId = crypto.randomUUID();
+                localStorage.setItem(USER_ID_STORAGE_KEY, userId);
+            }
+            return userId;
+        };
 
         // --- Initialisation et Authentification ---
 
@@ -222,20 +234,33 @@
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                // Tentative de connexion
+                // Déterminer le mode de connexion
                 if (initialAuthToken) {
+                    // Si un jeton est fourni (DJ), on tente la connexion personnalisée
                     await signInWithCustomToken(auth, initialAuthToken);
+                    isDjMode = true;
                 } else {
+                    // Sinon, on utilise l'ID persistant stocké dans le navigateur.
+                    // IMPORTANT : Firestore utilise l'UID de l'utilisateur AUTH pour les requêtes.
+                    // Nous allons donc utiliser signInAnonymously pour obtenir un UID d'authentification valide
+                    // pour les règles Firestore, même si nous avons un ID persistant.
                     await signInAnonymously(auth);
+                    isDjMode = false;
                 }
 
                 // Listener d'état d'authentification
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
-                        currentUserId = user.uid;
+                        if (isDjMode) {
+                            currentUserId = "DJ-" + user.uid.substring(0, 8); // DJ ID pour affichage
+                            queueTitle.textContent = "Console du DJ";
+                        } else {
+                            // Pour les utilisateurs non-DJ, on utilise l'ID persistant
+                            currentUserId = getPersistentUserId();
+                        }
                     } else {
-                        // Fallback au cas où l'authentification échoue
-                        currentUserId = generateUUID();
+                        // Ceci ne devrait pas arriver si signInAnonymously réussit.
+                        currentUserId = getPersistentUserId();
                     }
                     userIdDisplay.textContent = currentUserId;
                     isAuthReady = true;
@@ -245,11 +270,19 @@
 
             } catch (e) {
                 console.error("Erreur d'initialisation Firebase:", e);
-                displayError("Erreur critique: Échec de l'initialisation Firebase. Vérifiez la console.");
+                // Si la connexion avec le jeton DJ échoue, basculer en mode visiteur
+                if (isDjMode) {
+                    console.warn("Échec de la connexion DJ. Redémarrage en mode Visiteur anonyme.");
+                    isDjMode = false;
+                    // Tenter l'authentification anonyme pour le visiteur
+                    await signInAnonymously(auth);
+                } else {
+                    displayError("Erreur critique: Échec de l'initialisation Firebase. Vérifiez la console.");
+                }
             }
         }
 
-        // --- Fonctions d'interface utilisateur ---
+        // --- Fonctions d'interface utilisateur (inchangées) ---
 
         function hideLoadingAndShowApp() {
             loadingIndicator.classList.add('hidden');
@@ -285,7 +318,7 @@
             }, 5000);
         }
 
-        // --- Logique Firestore ---
+        // --- Logique Firestore (inchangée) ---
 
         function setupRealtimeListener() {
             if (!db || !isAuthReady) {
@@ -320,11 +353,19 @@
             });
         }
 
-        // --- Rendu de la File d'Attente ---
+        // --- Rendu de la File d'Attente (MIS À JOUR) ---
 
         function renderSongList(songs) {
             songList.innerHTML = ''; // Nettoyer la liste
             queueCountSpan.textContent = songs.length;
+            
+            // Affichage du titre DJ si en mode DJ
+            if(isDjMode) {
+                queueTitle.textContent = "Console du DJ (" + auth.currentUser.uid.substring(0, 8) + ")";
+            } else {
+                queueTitle.textContent = "La File d'Attente";
+            }
+
 
             if (songs.length === 0) {
                 emptyQueueMessage.classList.remove('hidden');
@@ -340,9 +381,12 @@
                     'bg-gradient-to-r from-yellow-700 to-orange-600 border-l-8 border-yellow-300 animate-glow-item' : 
                     'bg-gradient-to-r from-gray-800 to-gray-700 border-l-8 border-purple-600';
                 const titleClass = index === 0 ? 'text-white text-shadow-neon-sm' : 'text-yellow-300';
+                
+                // Affichage de l'ID du Soumetteur (simplifié)
+                const submitterId = song.user_id ? song.user_id.substring(0, 8) : 'Anonyme';
 
-                // Génération des boutons d'action (DJ)
-                const buttonsHtml = `
+                // Génération des boutons d'action (DJ) - Affichés SEULEMENT en mode DJ
+                const buttonsHtml = isDjMode ? `
                     <div class="flex space-x-3 ml-4">
                         <button
                             onclick="handleMarkPlayed('${song.id}')"
@@ -361,7 +405,7 @@
                             <span class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 p-2 text-xs bg-black text-white rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap">Supprimer</span>
                         </button>
                     </div>
-                `;
+                ` : '';
 
                 li.className = `p-4 rounded-xl flex justify-between items-center shadow-lg transition-all transform hover:scale-[1.02] duration-200 ${articleClass}`;
                 li.innerHTML = `
@@ -373,7 +417,7 @@
                             par <span class="font-semibold text-pink-300">${song.artist}</span>
                         </p>
                         <p class="text-xs text-gray-400 mt-2">
-                            Soumis à: ${song.timestamp.toLocaleTimeString('fr-FR')}
+                            Soumis par: <span class="font-mono text-xs text-purple-300">${submitterId}</span> à: ${song.timestamp.toLocaleTimeString('fr-FR')}
                         </p>
                     </div>
                     ${buttonsHtml}
@@ -384,7 +428,7 @@
             LucideIcons.createIcons(); 
         }
 
-        // --- Gestion des Événements ---
+        // --- Gestion des Événements (inchangée) ---
 
         submissionForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -431,7 +475,7 @@
         });
 
         window.handleMarkPlayed = async (songId) => {
-            if (!db) return;
+            if (!db || !isDjMode) return; // Sécurité côté client
             try {
                 const songRef = doc(db, 'artifacts', appId, 'public', 'data', 'song_requests', songId);
                 await updateDoc(songRef, {
@@ -445,7 +489,7 @@
         };
 
         window.handleDelete = async (songId) => {
-            if (!db) return;
+            if (!db || !isDjMode) return; // Sécurité côté client
             try {
                 const songRef = doc(db, 'artifacts', appId, 'public', 'data', 'song_requests', songId);
                 await deleteDoc(songRef);
