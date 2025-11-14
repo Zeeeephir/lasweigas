@@ -167,8 +167,6 @@
         // --- Configuration Firebase (MISES À JOUR AVEC VOS VALEURS) ---
         // ID du DJ à utiliser pour le mode Console du DJ
         const DJ_ID = 'd7f082b7-11ae-400b-b1ea-e1a02a130932'; 
-        // Laissez l'API Key vide, elle est injectée par l'environnement
-        const DJ_TOKEN = DJ_ID; // Utiliser l'ID du DJ comme jeton pour le custom auth
         
         // VOS VALEURS DE CONFIGURATION: (Généralement injectées par l'environnement)
         const APP_ID = 'lasweigas'; // Nom de l'app par défaut
@@ -186,8 +184,10 @@
         // Configuration pour l'environnement de développement/déploiement
         const appId = typeof __app_id !== 'undefined' ? __app_id : APP_ID;
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : FIREBASE_CONFIG;
-        // Le jeton initial sera l'ID du DJ si l'utilisateur y a accès, sinon il sera null/vide.
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : DJ_TOKEN; 
+        
+        // FIX: Le jeton initial doit être soit un jeton JWT valide de l'environnement, soit null.
+        // Utiliser le DJ_ID brut comme jeton personnalisé provoque l'erreur.
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
 
         // Références aux éléments du DOM
         const loadingIndicator = document.getElementById('loading-indicator');
@@ -214,9 +214,6 @@
         let isAuthReady = false;
         let isDjMode = false; // Nouveau mode pour le DJ
 
-        // Clé localStorage pour l'ID utilisateur persistant (NON UTILISÉE - on utilise l'UID d'Auth)
-        // L'UID d'authentification Firebase sera utilisé comme userId réel pour les règles Firestore.
-
         // Fonction d'aide pour générer un ID aléatoire si on doit utiliser un ID non-Auth (visiteur)
         const getNonAuthUserId = () => {
             return crypto.randomUUID();
@@ -233,16 +230,11 @@
 
                 // Déterminer le mode de connexion
                 if (initialAuthToken) {
-                    // Si un jeton est fourni (ici, l'ID du DJ), on tente la connexion personnalisée
+                    // Si un jeton est fourni (assumé valide), on tente la connexion personnalisée
                     await signInWithCustomToken(auth, initialAuthToken);
-                    // L'UID de l'utilisateur AUTH sera l'ID du DJ si la connexion réussit
-                    if (auth.currentUser && auth.currentUser.uid === DJ_ID) {
-                        isDjMode = true;
-                    }
                 } else {
                     // Sinon, on utilise l'authentification anonyme pour tous les visiteurs
                     await signInAnonymously(auth);
-                    isDjMode = false;
                 }
 
                 // Listener d'état d'authentification
@@ -254,13 +246,13 @@
                             currentUserId = "DJ-CONSOLE"; 
                             queueTitle.textContent = "Console du DJ";
                         } else {
-                            // Pour les visiteurs, on utilise l'UID de l'auth anonyme
+                            // Pour les visiteurs anonymes ou autres utilisateurs
                             isDjMode = false;
                             currentUserId = user.uid;
                             queueTitle.textContent = "La File d'Attente";
                         }
                     } else {
-                        // En cas de déconnexion inattendue
+                        // Ceci ne devrait jamais arriver avec signInAnonymously réussi
                         currentUserId = getNonAuthUserId();
                         isDjMode = false;
                     }
@@ -272,12 +264,14 @@
                 });
 
             } catch (e) {
-                console.error("Erreur d'initialisation Firebase:", e);
+                // Cette erreur est maintenant plus susceptible de se produire si le jeton initial est invalide, 
+                // ou si la configuration Firebase est incorrecte.
+                console.error("Erreur d'initialisation ou d'authentification Firebase:", e);
                 displayError("Erreur critique: Échec de l'initialisation Firebase ou de la connexion. Vérifiez la console.");
             }
         }
 
-        // --- Fonctions d'interface utilisateur ---
+        // --- Fonctions d'interface utilisateur (inchangées) ---
 
         function hideLoadingAndShowApp() {
             loadingIndicator.classList.add('hidden');
@@ -313,7 +307,7 @@
             }, 5000);
         }
 
-        // --- Logique Firestore ---
+        // --- Logique Firestore (inchangée) ---
 
         function setupRealtimeListener() {
             if (!db || !isAuthReady) {
@@ -348,7 +342,7 @@
             });
         }
 
-        // --- Rendu de la File d'Attente ---
+        // --- Rendu de la File d'Attente (inchangé) ---
 
         function renderSongList(songs) {
             songList.innerHTML = ''; // Nettoyer la liste
@@ -423,7 +417,7 @@
             LucideIcons.createIcons(); 
         }
 
-        // --- Gestion des Événements ---
+        // --- Gestion des Événements (inchangée) ---
 
         submissionForm.addEventListener('submit', async (e) => {
             e.preventDefault();
