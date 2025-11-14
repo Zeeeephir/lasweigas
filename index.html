@@ -159,34 +159,25 @@
 
     <!-- Firebase SDKs import (must be type="module") -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         // Ajout de la gestion de l'état persistant pour l'ID utilisateur
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, addDoc, updateDoc, doc, where, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Configuration Firebase (MISES À JOUR AVEC VOS VALEURS) ---
+        // --- Configuration Firebase ---
         // ID du DJ à utiliser pour le mode Console du DJ
         const DJ_ID = 'd7f082b7-11ae-400b-b1ea-e1a02a130932'; 
         
-        // VOS VALEURS DE CONFIGURATION: (Généralement injectées par l'environnement)
-        const APP_ID = 'lasweigas'; // Nom de l'app par défaut
-        const FIREBASE_CONFIG = {
-            apiKey: "",
-            authDomain: "lasweigas.firebaseapp.com",
-            projectId: "lasweigas",
-            storageBucket: "lasweigas.firebasestorage.app",
-            messagingSenderId: "620039526308",
-            appId: "1:620039526308:web:83a6e370fb0379111c9331",
-            measurementId: "G-KPF8D1ZNDX"
-        };
-        // -------------------------------------------------------------------
+        // Configuration de l'application (Ces valeurs sont automatiquement injectées par l'environnement)
+        const APP_ID = 'lasweigas'; 
+        const FIREBASE_CONFIG = {}; // Laisser vide pour forcer l'utilisation de l'injection
+        // ------------------------------
 
         // Configuration pour l'environnement de développement/déploiement
         const appId = typeof __app_id !== 'undefined' ? __app_id : APP_ID;
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : FIREBASE_CONFIG;
         
-        // FIX: Le jeton initial doit être soit un jeton JWT valide de l'environnement, soit null.
-        // Utiliser le DJ_ID brut comme jeton personnalisé provoque l'erreur.
+        // Le jeton initial est fourni par l'environnement Canvas s'il existe.
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
 
         // Références aux éléments du DOM
@@ -223,6 +214,9 @@
 
         async function initializeAppAndAuth() {
             try {
+                // IMPORTANT: Active le logging de débogage pour voir les détails de l'erreur Auth ou Firestore
+                setLogLevel('debug'); 
+
                 // Initialiser l'application Firebase
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -230,7 +224,7 @@
 
                 // Déterminer le mode de connexion
                 if (initialAuthToken) {
-                    // Si un jeton est fourni (assumé valide), on tente la connexion personnalisée
+                    // Si un jeton est fourni (assumé JWT valide), on tente la connexion personnalisée
                     await signInWithCustomToken(auth, initialAuthToken);
                 } else {
                     // Sinon, on utilise l'authentification anonyme pour tous les visiteurs
@@ -264,9 +258,8 @@
                 });
 
             } catch (e) {
-                // Cette erreur est maintenant plus susceptible de se produire si le jeton initial est invalide, 
-                // ou si la configuration Firebase est incorrecte.
-                console.error("Erreur d'initialisation ou d'authentification Firebase:", e);
+                // Cette erreur se produit lorsque l'initialisation de l'application ou la connexion échoue
+                console.error("Erreur critique d'initialisation ou d'authentification Firebase:", e);
                 displayError("Erreur critique: Échec de l'initialisation Firebase ou de la connexion. Vérifiez la console.");
             }
         }
