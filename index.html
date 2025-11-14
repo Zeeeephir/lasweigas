@@ -168,14 +168,26 @@
         // ID du DJ à utiliser pour le mode Console du DJ
         const DJ_ID = 'd7f082b7-11ae-400b-b1ea-e1a02a130932'; 
         
-        // Configuration de l'application (Ces valeurs sont automatiquement injectées par l'environnement)
+        // Valeurs de configuration de secours au cas où les variables d'environnement sont vides ou manquantes.
+        // J'ai réintroduit les valeurs de votre ancienne configuration.
         const APP_ID = 'lasweigas'; 
-        const FIREBASE_CONFIG = {}; // Laisser vide pour forcer l'utilisation de l'injection
+        const FALLBACK_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyAejaj7ZmqZfsp78jkKyv8RM3hTS4LjyUo",
+            authDomain: "lasweigas.firebaseapp.com",
+            projectId: "lasweigas",
+            storageBucket: "lasweigas.firebasestorage.app",
+            messagingSenderId: "620039526308",
+            appId: "1:620039526308:web:83a6e370fb0379111c9331",
+            measurementId: "G-KPF8D1ZNDX"
+        };
         // ------------------------------
 
         // Configuration pour l'environnement de développement/déploiement
         const appId = typeof __app_id !== 'undefined' ? __app_id : APP_ID;
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : FIREBASE_CONFIG;
+        // Si __firebase_config est défini, on l'utilise. Sinon, on utilise la configuration de secours.
+        const firebaseConfig = (typeof __firebase_config !== 'undefined' && Object.keys(JSON.parse(__firebase_config)).length > 0) 
+            ? JSON.parse(__firebase_config) 
+            : FALLBACK_FIREBASE_CONFIG;
         
         // Le jeton initial est fourni par l'environnement Canvas s'il existe.
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
