@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LasWei'GAs Music DJ App</title>
+    
+    <!-- Importation de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Importation des polices personnalisées -->
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <!-- Icônes Lucide pour les éléments visuels (Version UMD pour un accès global) -->
+    <!-- FIX: Utilisation de la version UMD pour un accès direct à lucide.createIcons() -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <style>
+        /* Styles CSS pour l'ambiance Las Vegas */
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background-color: #000;
+            color: #fff;
+        }
+        .text-shadow-neon {
+            text-shadow:
+                0 0 7px rgba(255, 105, 180, 0.7), /* Pink */
+                0 0 10px rgba(255, 105, 180, 0.7),
+                0 0 21px rgba(255, 105, 180, 0.7),
+                0 0 42px rgba(0, 255, 255, 0.5), /* Cyan */
+                0 0 82px rgba(0, 255, 255, 0.5),
+                0 0 92px rgba(0, 255, 255, 0.5),
+                0 0 102px rgba(0, 255, 255, 0.5),
+                0 0 151px rgba(0, 255, 255, 0.5);
+        }
+        .text-shadow-neon-sm {
+             text-shadow: 0 0 5px #fff, 0 0 10px #ff00ff, 0 0 15px #00ffff;
+        }
+        @keyframes neon-glow {
+            0%, 100% { box-shadow: 0 0 5px #facc15, 0 0 10px #facc15, 0 0 20px #facc15, 0 0 40px #a78bfa, 0 0 80px #a78bfa; }
+            50% { box-shadow: 0 0 10px #facc15, 0 0 20px #facc15, 0 0 30px #facc15, 0 0 60px #a78bfa, 0 0 120px #a78bfa; }
+        }
+        .animate-neon-glow { animation: neon-glow 3s ease-in-out infinite alternate; }
+        @keyframes pulse-neon {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+        .animate-pulse-neon { animation: pulse-neon 2s ease-in-out infinite alternate; }
+        @keyframes bounce-subtle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow { animation: spin-slow 10s linear infinite; }
+        @keyframes glow-item {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,255,0,0.5), 0 0 10px rgba(255,165,0,0.5); }
+            50% { box-shadow: 0 0 10px rgba(255,255,0,0.8), 0 0 20px rgba(255,165,0,0.8); }
+        }
+        .animate-glow-item { animation: glow-item 2s ease-in-out infinite alternate; }
+        .bg-vegas-pattern {
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 30%),
+                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 30%),
+                linear-gradient(to bottom right, rgba(255, 0, 0, 0.05), rgba(255, 0, 255, 0.05));
+            background-size: 100px 100px;
+            animation: sparkle 15s linear infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-gray-900 to-black p-4 sm:p-8 relative overflow-hidden">
+    
+    <!-- Subtle background glitter effect -->
+    <div class="absolute inset-0 z-0 bg-vegas-pattern opacity-10"></div>
+
+    <header class="text-center mb-10 relative z-10">
+        <h1 class="text-5xl sm:text-6xl font-extrabold text-white leading-tight mb-3 font-['Orbitron'] text-shadow-neon">
+            <span class="text-yellow-400">LASWEI'GAS</span> MUSIC
+        </h1>
+        <p class="text-2xl text-pink-300 font-semibold animate-pulse-neon">
+            Votre Ticket pour la Playlist Ultime !
+        </p>
+    </header>
+
+    <main id="app-container" class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 relative z-10">
+        <!-- Conteneur pour l'indicateur de chargement -->
+        <div id="loading-indicator" class="lg:col-span-2 flex flex-col items-center justify-center py-20">
+            <i data-lucide="loader-2" class="w-16 h-16 text-yellow-400 animate-spin-slow animate-pulse"></i>
+            <p class="mt-6 text-xl text-pink-400 font-bold animate-pulse-neon">Ouverture des portes de LasWei'GAs Music...</p>
+        </div>
+
+        <!-- Conteneurs pour les deux sections de l'application -->
+        <div id="form-section" class="hidden">
+            <div class="bg-gradient-to-br from-purple-800 to-indigo-900 p-6 rounded-3xl shadow-2xl border-4 border-yellow-400 transform transition-transform duration-300 hover:scale-[1.01] animate-neon-glow">
+                <h2 class="text-3xl font-extrabold text-yellow-300 mb-6 flex items-center justify-center text-shadow-neon">
+                    <i data-lucide="music" class="mr-3 h-8 w-8 text-pink-400 animate-pulse-neon"></i>
+                    Proposer un Titre Scintillant
+                </h2>
+                <form id="submission-form" class="space-y-6">
+                    <div>
+                        <label for="title" class="block text-lg font-bold text-gray-100 mb-2">Titre de la Chanson</label>
+                        <input
+                            id="title"
+                            type="text"
+                            required
+                            placeholder="Ex: Viva Las Vegas"
+                            class="mt-1 block w-full px-5 py-3 border-2 border-pink-500 rounded-xl shadow-inner bg-gray-900 text-yellow-300 placeholder-gray-500 focus:ring-pink-400 focus:border-pink-400 transition-all duration-200 text-lg"
+                        />
+                    </div>
+                    <div>
+                        <label for="artist" class="block text-lg font-bold text-gray-100 mb-2">Artiste Étoile</label>
+                        <input
+                            id="artist"
+                            type="text"
+                            required
+                            placeholder="Ex: Elvis Presley"
+                            class="mt-1 block w-full px-5 py-3 border-2 border-pink-500 rounded-xl shadow-inner bg-gray-900 text-yellow-300 placeholder-gray-500 focus:ring-pink-400 focus:border-pink-400 transition-all duration-200 text-lg"
+                        />
+                    </div>
+                    <button
+                        id="submit-button"
+                        type="submit"
+                        class="w-full flex justify-center items-center py-3 px-6 border-4 border-yellow-300 rounded-full shadow-lg text-white font-extrabold bg-gradient-to-r from-red-600 to-purple-600 hover:from-red-700 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-purple-900 disabled:opacity-50 transition-all duration-300 transform hover:scale-[1.02] text-xl animate-bounce-subtle"
+                    >
+                        <i data-lucide="zap" class="mr-3 h-6 w-6"></i>
+                        Envoyer au DJ !
+                    </button>
+                </form>
+                <div id="submission-message" class="mt-6 hidden p-4 rounded-xl text-md font-semibold text-center"></div>
+                <p class="mt-6 text-xs text-gray-400 text-center">
+                    Votre Pass Unique pour la Soirée : <span id="user-id-display" class="font-mono text-yellow-200 break-all">Chargement...</span>
+                </p>
+            </div>
+        </div>
+
+        <div id="queue-section" class="hidden">
+            <div class="bg-gradient-to-br from-gray-900 to-black p-6 rounded-3xl shadow-2xl border-4 border-red-500">
+                <h2 class="text-3xl font-extrabold text-yellow-300 mb-6 flex items-center justify-center border-b-4 border-red-500 pb-4 text-shadow-neon">
+                    <i data-lucide="check-circle" class="mr-3 h-8 w-8 text-green-400 animate-pulse-neon"></i>
+                    <span id="queue-title">La File d'Attente du DJ</span> (<span id="queue-count">0</span>)
+                </h2>
+                <ul id="song-list" class="space-y-4">
+                    <!-- Les chansons seront injectées ici par JS -->
+                </ul>
+                <div id="empty-queue-message" class="text-center py-10 text-yellow-200 animate-pulse hidden">
+                    <p class="text-2xl font-bold">La piste de danse attend ! 💃🕺</p>
+                    <p class="text-lg mt-2 text-gray-300">Soyez le premier à lancer la fiesta.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="mt-16 text-center text-md text-gray-400 relative z-10">
+        <p>Créé pour briller à LasWei'GAs | App ID: <span id="app-id-display" class="text-yellow-300"></span></p>
+    </footer>
+
+    <!-- Firebase SDKs import (must be type="module") -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, query, onSnapshot, addDoc, updateDoc, doc, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // --- Configuration Firebase (MISES À JOUR AVEC VOS VALEURS) ---
+        // Les variables __app_id et __firebase_config sont utilisées par défaut dans l'environnement.
+        // Si elles ne sont pas définies (pour un déploiement GitHub Pages par exemple),
+        // nous utilisons vos valeurs par défaut.
+        
+        // VOS VALEURS DE CONFIGURATION:
+        const APP_ID = 'lasweigas'; 
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyAejaj7ZmqZfsp78jkKyv8RM3hTS4LjyUo",
+            authDomain: "lasweigas.firebaseapp.com",
+            projectId: "lasweigas",
+            storageBucket: "lasweigas.firebasestorage.app",
+            messagingSenderId: "620039526308",
+            appId: "1:620039526308:web:83a6e370fb0379111c9331",
+            measurementId: "G-KPF8D1ZNDX"
+        };
+        const INITIAL_AUTH_TOKEN = null; 
+        // -------------------------------------------------------------------
+
+        // Configuration pour l'environnement de développement/déploiement
+        const appId = typeof __app_id !== 'undefined' ? __app_id : APP_ID;
+        // On vérifie si __firebase_config est défini pour éviter de parser une chaîne vide ou non existante
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : FIREBASE_CONFIG;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : INITIAL_AUTH_TOKEN;
+
+        // Références aux éléments du DOM
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const formSection = document.getElementById('form-section');
+        const queueSection = document.getElementById('queue-section');
+        const songList = document.getElementById('song-list');
+        const emptyQueueMessage = document.getElementById('empty-queue-message');
+        const submissionForm = document.getElementById('submission-form');
+        const titleInput = document.getElementById('title');
+        const artistInput = document.getElementById('artist');
+        const submitButton = document.getElementById('submit-button');
+        const submissionMessageDiv = document.getElementById('submission-message');
+        const queueCountSpan = document.getElementById('queue-count');
+        const userIdDisplay = document.getElementById('user-id-display');
+        document.getElementById('app-id-display').textContent = appId;
+
+
+        // Variables globales pour Firebase
+        let db;
+        let auth;
+        let currentUserId = null;
+        let isAuthReady = false;
+
+        // Fonction d'aide pour générer un UUID (pour les utilisateurs non authentifiés)
+        const generateUUID = () => crypto.randomUUID();
+
+        // --- Initialisation et Authentification ---
+
+        async function initializeAppAndAuth() {
+            try {
+                // Initialiser l'application Firebase
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Tentative de connexion
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // Listener d'état d'authentification
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                    } else {
+                        // Fallback au cas où l'authentification échoue
+                        currentUserId = generateUUID();
+                    }
+                    userIdDisplay.textContent = currentUserId;
+                    isAuthReady = true;
+                    hideLoadingAndShowApp();
+                    setupRealtimeListener(); // Lance l'écoute après l'authentification
+                });
+
+            } catch (e) {
+                console.error("Erreur d'initialisation Firebase:", e);
+                displayError("Erreur critique: Échec de l'initialisation Firebase. Vérifiez la console.");
+            }
+        }
+
+        // --- Fonctions d'interface utilisateur ---
+
+        function hideLoadingAndShowApp() {
+            loadingIndicator.classList.add('hidden');
+            formSection.classList.remove('hidden');
+            queueSection.classList.remove('hidden');
+        }
+
+        function displayError(message) {
+            loadingIndicator.innerHTML = `
+                <div class="p-8 text-center bg-red-900 border-4 border-red-500 text-white rounded-xl m-4 shadow-neon-red">
+                    <h1 class="text-3xl font-extrabold text-yellow-300">Erreur de l'Application</h1>
+                    <p class="mt-4 text-lg">${message}</p>
+                    <p class="mt-2 text-sm text-gray-300">Veuillez rafraîchir la page.</p>
+                </div>
+            `;
+            loadingIndicator.classList.remove('hidden');
+            formSection.classList.add('hidden');
+            queueSection.classList.add('hidden');
+        }
+
+        function displaySubmissionMessage(text, type) {
+            submissionMessageDiv.textContent = text;
+            submissionMessageDiv.classList.remove('hidden', 'bg-green-600', 'bg-red-700', 'border-green-400', 'border-red-400');
+            
+            if (type === 'success') {
+                submissionMessageDiv.classList.add('bg-green-600', 'text-white', 'shadow-lg', 'border-2', 'border-green-400', 'animate-fade-in');
+            } else {
+                submissionMessageDiv.classList.add('bg-red-700', 'text-white', 'shadow-lg', 'border-2', 'border-red-400', 'animate-fade-in');
+            }
+
+            setTimeout(() => {
+                submissionMessageDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        // --- Logique Firestore ---
+
+        function setupRealtimeListener() {
+            if (!db || !isAuthReady) {
+                console.warn("Firestore non prêt ou authentification non terminée. Report du listener.");
+                return;
+            }
+
+            // Chemin public pour la collaboration : /artifacts/{appId}/public/data/song_requests
+            const requestsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'song_requests');
+            
+            // Requête: toutes les chansons qui n'ont pas encore été jouées
+            const q = query(
+                requestsCollection,
+                where('played', '==', false)
+            );
+
+            onSnapshot(q, (snapshot) => {
+                let songListArray = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    // Convertir le timestamp en objet Date pour le tri côté client
+                    timestamp: doc.data().timestamp ? doc.data().timestamp.toDate() : new Date(),
+                }));
+
+                // Tri côté client par timestamp (le plus ancien en premier)
+                songListArray.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+                renderSongList(songListArray);
+            }, (err) => {
+                console.error("Firestore Snapshot Error:", err);
+                displayError("Erreur de récupération de la file d'attente. Problème de connexion ou de permission.");
+            });
+        }
+
+        // --- Rendu de la File d'Attente ---
+
+        function renderSongList(songs) {
+            songList.innerHTML = ''; // Nettoyer la liste
+            queueCountSpan.textContent = songs.length;
+
+            if (songs.length === 0) {
+                emptyQueueMessage.classList.remove('hidden');
+            } else {
+                emptyQueueMessage.classList.add('hidden');
+            }
+
+            songs.forEach((song, index) => {
+                const li = document.createElement('li');
+                
+                // Styles d'article en fonction de la position dans la file (le premier brille)
+                const articleClass = index === 0 ? 
+                    'bg-gradient-to-r from-yellow-700 to-orange-600 border-l-8 border-yellow-300 animate-glow-item' : 
+                    'bg-gradient-to-r from-gray-800 to-gray-700 border-l-8 border-purple-600';
+                const titleClass = index === 0 ? 'text-white text-shadow-neon-sm' : 'text-yellow-300';
+
+                // Génération des boutons d'action (DJ)
+                const buttonsHtml = `
+                    <div class="flex space-x-3 ml-4">
+                        <button
+                            onclick="handleMarkPlayed('${song.id}')"
+                            class="p-3 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 transition-all transform hover:scale-110 active:scale-95 group relative border-2 border-green-400"
+                            aria-label="Marquer comme jouée"
+                        >
+                            <i data-lucide="check-circle" class="h-6 w-6"></i>
+                            <span class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 p-2 text-xs bg-black text-white rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap">Jouée</span>
+                        </button>
+                        <button
+                            onclick="handleDelete('${song.id}')"
+                            class="p-3 bg-red-600 text-white rounded-full shadow-lg hover:bg-red-700 transition-all transform hover:scale-110 active:scale-95 group relative border-2 border-red-400"
+                            aria-label="Supprimer de la liste"
+                        >
+                            <i data-lucide="trash-2" class="h-6 w-6"></i>
+                            <span class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 p-2 text-xs bg-black text-white rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap">Supprimer</span>
+                        </button>
+                    </div>
+                `;
+
+                li.className = `p-4 rounded-xl flex justify-between items-center shadow-lg transition-all transform hover:scale-[1.02] duration-200 ${articleClass}`;
+                li.innerHTML = `
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xl font-bold truncate ${titleClass}">
+                            ${index + 1}. ${song.title}
+                        </p>
+                        <p class="text-md text-gray-200 truncate mt-1">
+                            par <span class="font-semibold text-pink-300">${song.artist}</span>
+                        </p>
+                        <p class="text-xs text-gray-400 mt-2">
+                            Soumis à: ${song.timestamp.toLocaleTimeString('fr-FR')}
+                        </p>
+                    </div>
+                    ${buttonsHtml}
+                `;
+                songList.appendChild(li);
+            });
+            // Réinitialiser les icônes Lucide après l'ajout des éléments
+            LucideIcons.createIcons(); 
+        }
+
+        // --- Gestion des Événements ---
+
+        submissionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!db || !isAuthReady) {
+                displaySubmissionMessage("Erreur: L'application n'est pas complètement chargée. Veuillez réessayer.", 'error');
+                return;
+            }
+
+            const title = titleInput.value.trim();
+            const artist = artistInput.value.trim();
+
+            if (!title || !artist) return;
+
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i data-lucide="loader-2" class="animate-spin mr-3 h-6 w-6"></i> Envoi...';
+            LucideIcons.createIcons();
+
+            const newRequest = {
+                title: title,
+                artist: artist,
+                user_id: currentUserId,
+                timestamp: new Date(),
+                played: false,
+                upvotes: 0,
+            };
+
+            try {
+                const requestsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'song_requests');
+                await addDoc(requestsCollection, newRequest);
+                
+                titleInput.value = '';
+                artistInput.value = '';
+                displaySubmissionMessage('Suggestion envoyée ! Merci pour votre contribution.', 'success');
+
+            } catch (e) {
+                console.error("Submission Error:", e);
+                displaySubmissionMessage("Erreur lors de l'envoi. Problème de permission ou de connexion.", 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i data-lucide="zap" class="mr-3 h-6 w-6"></i> Envoyer au DJ !';
+                LucideIcons.createIcons();
+            }
+        });
+
+        window.handleMarkPlayed = async (songId) => {
+            if (!db) return;
+            try {
+                const songRef = doc(db, 'artifacts', appId, 'public', 'data', 'song_requests', songId);
+                await updateDoc(songRef, {
+                    played: true,
+                    played_at: new Date(),
+                });
+            } catch (e) {
+                console.error("Mark Played Error:", e);
+                displayError("Impossible de marquer la chanson comme jouée. Vérifiez vos permissions.");
+            }
+        };
+
+        window.handleDelete = async (songId) => {
+            if (!db) return;
+            try {
+                const songRef = doc(db, 'artifacts', appId, 'public', 'data', 'song_requests', songId);
+                await deleteDoc(songRef);
+            } catch (e) {
+                console.error("Delete Error:", e);
+                displayError("Impossible de supprimer la chanson. Vérifiez vos permissions.");
+            }
+        };
+
+        // Enregistrez la fonction createIcons dans un objet global pour l'utiliser dans renderSongList
+        // FIX: Utilise le wrapper pour la fonction globale Lucide
+        const LucideIcons = { 
+            createIcons: () => {
+                if (window.lucide && window.lucide.createIcons) {
+                    window.lucide.createIcons();
+                }
+            }
+        };
+
+        // Lancement de l'initialisation de l'application au chargement de la fenêtre
+        window.onload = initializeAppAndAuth;
+    </script>
+</body>
+</html>
